@@ -3,7 +3,7 @@
 |Travis|_
 
 .. |Travis| image:: https://s3.amazonaws.com/coursera/topics/neuralnets/large-icon.png
-.. _Travis: http://robotics-computing.tk/
+.. _Travis: google.com
 
 DRL-AI
 ============
