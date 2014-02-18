@@ -103,7 +103,6 @@ void Col2Im(double* im_col, int im_size, int filter_size, double* im) {
 }
 
 
-
 void Conv2_corr(double *im, double *Wc, int im_size, int filter_size, int filter_num, double alpha, double *output) {
   int conv_dim = im_size - filter_size + 1;
   double *im_col = malloc(conv_dim*conv_dim*filter_size*filter_size*sizeof(double));    
@@ -223,7 +222,6 @@ int main() {
       data_im_RGB[i][j] -= data_mean;
     }
   }
-
 
   for (i = 0; i < SAMPLE_SIZE; ++i) {
     free(data_im_RGB[i]);
