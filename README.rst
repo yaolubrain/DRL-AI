@@ -8,11 +8,10 @@
 DRL-AI
 ============
 
-deep reinforecment learning(DRL) is an algorithm for AI agent to play against classic game environment
+Deep reinforecment learning(DRL) is an algorithm for AI agent to play against classic game environment
 that and distributed under the 3-Clause <License> license.
 
-The project was started in 2014 by a group in University of Helsinki as a 
-reinforcement-related project. See the AUTHORS.rst file for a complete list of contributors.
+The project was started in 2014 by a group in University of Helsinki as a reinforcement-related project. See the AUTHORS.rst file for a complete list of contributors.
 
 It is currently maintained by the team of initial contributors.
 
