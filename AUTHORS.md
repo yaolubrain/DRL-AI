@@ -1,14 +1,15 @@
-** Haibo JIn **
+**Haibo JIn **
 
 University of Helsinki
 
-** Yao Lu **
+**Yao Lu **
 
 yaolubrain@gmail.com
 
 University of Helsinki
 
-** Yuan Gao **
+**Yuan Gao **
+
 gaoyuankidult@gmail.com
 
 University of Helsinki
