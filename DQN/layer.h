@@ -85,8 +85,7 @@ class ConvLayer : public Layer {
   double* bias_;  
   double* grad_weight_;
   double* grad_bias_;
-  double* im_col_;
-  double* im_col_getgradient_;
+  double* im_col_;  
   double* ones_;
 };
 
@@ -119,7 +118,7 @@ class FullLayer : public Layer {
     type_ = "full";
     output_im_size_ = 0;
     output_size_ = layer_para->output_size_;
-    output_num_ = 1;
+    output_num_ = 1;    
   };
 
   ~FullLayer() {
