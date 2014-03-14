@@ -64,5 +64,4 @@ class NN {
 
 };
 
-
 #endif
