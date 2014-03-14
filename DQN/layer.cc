@@ -138,14 +138,20 @@ void ConvLayer::Init(Layer* bottom, Layer* top) {
   bias_ = new double[input_num_*filter_num_];      
   grad_weight_ = new double[input_num_*filter_num_*filter_size_*filter_size_];
   grad_bias_ = new double[input_num_*filter_num_];
-  im_col_ = new double[output_im_size_*output_im_size_*filter_size_*filter_size_];
-  im_col_getgradient_ = new double[output_im_size_*output_im_size_*(filter_size_ + 1)*(filter_size_ + 1)];
+  // im_col_ = new double[output_im_size_*output_im_size_*filter_size_*filter_size_];
+  im_col_ = new double[output_im_size_*output_im_size_*(filter_size_ + 1)*(filter_size_ + 1)];
   ones_ = new double[output_im_size_*output_im_size_];
 
   RandGauss(weight_, input_num_*filter_num_*filter_size_*filter_size_, 0.001);
   Zeros(bias_, input_num_*filter_num_);        
   Zeros(delta_, filter_num_*output_size_);
+
+  Zeros(grad_weight_, input_num_*filter_num_*filter_size_*filter_size_);
+  Zeros(grad_bias_, input_num_*filter_num_);
+
   Constants(ones_, output_im_size_*output_im_size_, 1.0);
+
+
 }
 
 void ConvLayer::Forward() {    
@@ -178,20 +184,17 @@ void ConvLayer::Backward() {
   }
 }  
 
-void ConvLayer::GetGradient() {
-  Zeros(grad_weight_, input_num_*filter_num_*filter_size_*filter_size_);
-  Zeros(grad_bias_, input_num_*filter_num_);
-
+void ConvLayer::GetGradient() {  
   // Convolute input_ with delta_  
   int CONV_DIM = filter_size_ + 1;
   int FILTER_SIZE = output_im_size_;
   for (int i = 0; i < input_num_; ++i) {
 
-    Im2Col(input_ + i*input_im_size_*input_im_size_, input_im_size_, FILTER_SIZE, im_col_getgradient_);  
+    Im2Col(input_ + i*input_im_size_*input_im_size_, input_im_size_, FILTER_SIZE, im_col_);  
 
     cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasNoTrans, 
               filter_num_, CONV_DIM*CONV_DIM, FILTER_SIZE*FILTER_SIZE,
-              (double)1/(nn_para_->mb_size_), delta_, FILTER_SIZE*FILTER_SIZE, im_col_getgradient_, 
+              (double)1/(nn_para_->mb_size_), delta_, FILTER_SIZE*FILTER_SIZE, im_col_, 
               CONV_DIM*CONV_DIM, 1, grad_weight_ + i*filter_num_*filter_size_*filter_size_, CONV_DIM*CONV_DIM);
   }
 
@@ -206,6 +209,9 @@ void ConvLayer::GetGradient() {
 void ConvLayer::Update() {
   cblas_daxpy(input_num_*filter_num_*filter_size_*filter_size_, - nn_para_->learn_rate_, grad_weight_, 1, weight_, 1);    
   cblas_daxpy(filter_num_, - nn_para_->learn_rate_, grad_bias_, 1, bias_, 1);    
+
+  Zeros(grad_weight_, input_num_*filter_num_*filter_size_*filter_size_);
+  Zeros(grad_bias_, input_num_*filter_num_);
 }
 
 void PoolLayer::Init(Layer* bottom, Layer* top) {
@@ -277,12 +283,14 @@ void FullLayer::Init(Layer* bottom, Layer* top) {
   delta_ = new double[output_size_];
   weight_ = new double[input_num_*input_size_*output_size_];
   bias_ = new double[output_size_];    
-  grad_weight_ = new double[input_size_*output_size_];
+  grad_weight_ = new double[input_num_*input_size_*output_size_];
   grad_bias_ = new double[output_size_];
   
   Zeros(delta_, output_size_);
   RandGauss(weight_, input_num_*input_size_*output_size_, 0.001);
   Zeros(bias_, output_size_);  
+  Zeros(grad_weight_, input_size_*output_size_);
+  Zeros(grad_bias_, output_size_);
 
 }
 
@@ -298,16 +306,14 @@ void FullLayer::Backward() {
   if (top_ == NULL) {
     // delta_d = o3 - yLayer* bottom
     memcpy(delta_, output_, output_size_*sizeof(double));
-    delta_[label_] -= 1;
+    delta_[0] -= 1;
   }
 
   cblas_dgemv(CblasRowMajor, CblasTrans, output_size_, input_size_*input_num_, 1.0,
               weight_, input_size_*input_num_, delta_, 1, 0.0, bottom_->delta_, 1);
 }
 
-void FullLayer::GetGradient() {
-  Zeros(grad_weight_, input_size_*output_size_);
-  Zeros(grad_bias_, output_size_);
+void FullLayer::GetGradient() {  
   cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasNoTrans, 
               input_num_*input_size_, output_size_, 1,
               (double)1/(nn_para_->mb_size_), input_ , 1, delta_, output_size_, 1, grad_weight_, output_size_);  
@@ -318,4 +324,6 @@ void FullLayer::GetGradient() {
 void FullLayer::Update() {
   cblas_daxpy(input_num_*input_size_*output_size_, - nn_para_->learn_rate_, grad_weight_, 1, weight_, 1);    
   cblas_daxpy(output_size_, - nn_para_->learn_rate_, grad_bias_, 1, bias_, 1);    
+  Zeros(grad_weight_, input_size_*output_size_);
+  Zeros(grad_bias_, output_size_);
 }
