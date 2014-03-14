@@ -2,16 +2,23 @@
 #include "random_tools.h"
 #include <iostream>
 #include <zlib.h>
+#include <iterator>
+#include <cstring>
+#include "../dnq/nn.h"
+#include "../dnq/layer.h"
+#include "../dnq/parameter.h"
 
-DeepQAgent::DeepQAgent(OSystem* _osystem, RomSettings* _settings) : 
+
+DeepQAgent::DeepQAgent(OSystem* _osystem, RomSettings* _settings) :
     PlayerAgent(_osystem, _settings) {
 
-
+    process_count_ = 0;
+    sampling_array_ = new double[4*SAMPLE_WIDTH*SAMPLE_HEIGHT];
 
 }
 DeepQAgent::~DeepQAgent()
 {
-
+    delete[] sampling_array_;
 }
 Action DeepQAgent::act() {
     Action a = Action(2);//legal_actions[rand() % legal_actions.size()];
@@ -149,7 +156,6 @@ Action DeepQAgent::agent_step() {
     // Only take an action if manual control is disabled
     Action a;
     a = act();
-
     int sample_width_;
     int sample_height_;
 
@@ -207,8 +213,6 @@ Action DeepQAgent::agent_step() {
     // DownSampling Reduce Size
     this->DownSampling(gray_buffer_,sample_buffer_,screen_width_,screen_height_,\
                        sample_width_,sample_height_);
-
-
     //cout<< this->p_rom_settings->getReward()<<endl;
 
 
@@ -217,22 +221,98 @@ Action DeepQAgent::agent_step() {
 
     //this->SaveGrayPNG(gray_buffer_,screen_width_,screen_height_);
 
-    // Save Sample for Debugging
-    //this->SaveGrayPNG(sample_buffer_,sample_width_,sample_height_);
+
+
+
+    // Copy sample file to the perminant address
+    for(int i = 0; i < SAMPLE_WIDTH ; i++)
+    {
+        for(int j = 0; j < SAMPLE_HEIGHT ; j++)
+        {
+            sampling_array_[process_count_*SAMPLE_WIDTH*SAMPLE_HEIGHT+ i*j] = sample_buffer_[i][j];
+        }
+    }
+
+    /*************************************************************/
+
+
+    NNParameter* nn_para = new NNParameter;
+
+     nn_para->im_size_ = 100;
+     nn_para->data_batch_num_ = 5;
+     nn_para->data_batch_size_ = 10000;
+     nn_para->sample_size_ = nn_para->data_batch_num_ * nn_para->data_batch_size_;
+     nn_para->channel_num_ = 3;
+     nn_para->class_num_ = 2;
+
+     nn_para->learn_rate_ = 0.001;
+     nn_para->mb_size_ = 50;
+     nn_para->epoch_num_ = 10;
+
+     // layer parameters
+     LayerParameter* conv1 = new LayerParameter();
+     LayerParameter* pool1 = new LayerParameter();
+     LayerParameter* conv2 = new LayerParameter();
+     LayerParameter* pool2 = new LayerParameter();
+     LayerParameter* full1 = new LayerParameter();
+
+     conv1->type_ = "conv";
+     conv1->input_im_size_ = nn_para->im_size_;
+     conv1->input_size_ = (conv1->input_im_size_)*(conv1->input_im_size_);
+     conv1->input_num_ = 4;
+     conv1->filter_size_ = 5;
+     conv1->filter_num_ = 20;
+
+     pool1->type_ = "pool";
+     pool1->pool_dim_ = 2;
+
+     conv2->type_ = "conv";
+     conv2->filter_size_ = 5;
+     conv2->filter_num_ = 20;
+
+     pool2->type_ = "pool";
+     pool2->pool_dim_ = 2;
+
+     full1->type_ = "full";
+     full1->output_size_ = nn_para->class_num_;
+
+     nn_para->layer_para_.push_back(conv1);
+     nn_para->layer_para_.push_back(pool1);
+     nn_para->layer_para_.push_back(conv2);
+     nn_para->layer_para_.push_back(pool2);
+     nn_para->layer_para_.push_back(full1);
+
+     NN* nn = new NN(nn_para);
+
+//     nn->Init();
+//     nn->Train();
+
+     delete nn;
+
+
+    /*************************************************************/
+
 
     // Destroy Gray Array
     DestroyImgBuf(gray_buffer_,screen_height_);
+
     // Destory Sample Array
     DestroyImgBuf(sample_buffer_,sample_height_);
-
-
-
 
     // Clean up
     if(buffer)  delete[] buffer;
 
+
+    if( 3 == process_count_){
+        process_count_ = -1;
+        // Save Sample for Debugging
+        //this->SaveGrayPNG(sampling_array_[0][0],sample_width_,sample_height_);
+        //std::cout << process_count_ << endl;
+    }
+
     if (record_trajectory) record_action(a);
 
+    process_count_ ++;
     frame_number++;
     episode_frame_number++;
 
