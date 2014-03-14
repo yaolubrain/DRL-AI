@@ -87,29 +87,59 @@ void NN::RandPerm(int *randperm, int size) {
 
 
 void NN::Train() {
+  double* im = new double[nn_para_->im_size_*nn_para_->im_size_*4];
+
+
   for (int e = 0; e < epoch_num_; ++e) {
+    
     for (int i = 0; i < sample_size_; ++i) {                    
 
-      layers_[0]->input_ = data_im_[i];
-      for (int j = 0; j < layers_.size(); ++j) {        
-        layers_[j]->Forward();               
-      }
-        
-      layers_[layers_.size() - 1]->label_ = labels_[i];
-      for (int j = layers_.size() - 1; j >= 0; --j) {
-        layers_[j]->Backward();            
+      for (int j = 0; j < nn_para_->im_size_*nn_para_->im_size_*4; ++j) {
+        im[j] = (double) (rand() + 1.0) / (RAND_MAX+1.0);
       }
 
+      layers_[0]->input_ = im;
+
+      // layers_[0]->input_ = data_im_[i];
+      for (int j = 0; j < layers_.size(); ++j) {        
+        layers_[j]->Forward();               
+      }      
+        
+      // layers_[layers_.size() - 1]->label_ = labels_[i];
+      // layers_[layers_.size() - 1]->label_ = 0;
+      for (int j = layers_.size() - 1; j >= 0; --j) {
+        layers_[j]->Backward();            
+      }      
+  
       for (int j = 0; j < layers_.size(); ++j) {   
-        layers_[j]->GetGradient();                             
+        layers_[j]->GetGradient();             
       }
       
-      if (i % nn_para_->mb_size_ == 0) {
-        for (int j = 0; j < layers_.size(); ++j) {   
-          layers_[j]->Update();               
-        }
-        std::cout << dynamic_cast<FullLayer*>(layers_[4])->bias_[0] << std::endl;      
-      }      
+      
+      // if (i % nn_para_->mb_size_ == 0) {
+      //   for (int j = 0; j < layers_.size(); ++j) {   
+      //     layers_[j]->Update();               
+      //   }        
+      // }      
+
+  // 
+
+      // std::cout << sample_size_<< " " << i << " " << data_im_[i][0] << std::endl;
+      // std::cout << layers_[0]->output_[0] << " " << dynamic_cast<FullLayer*>(layers_[4])->output_[0] << std::endl;      
+      // double error = 0.0;     
+      // for (int j = 0; j < nn_para_->class_num_; ++j) {
+      //   error += layers_[4]->delta_[j] * layers_[4]->delta_[j];
+      // }
+      // std::cout << error << std::endl;
+
+      // return;
+      // if (i == 100) {
+      //   std::cout << "one epoch done!" << std::endl;
+      //   return;
+      // }
+        
+
+
     }
 
     std::cout << "train!" << std::endl;
