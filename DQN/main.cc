@@ -18,12 +18,12 @@ int main() {
 
   NNParameter* nn_para = new NNParameter;
 
-  nn_para->im_size_ = 32;
+  nn_para->im_size_ = 100;
   nn_para->data_batch_num_ = 5;
   nn_para->data_batch_size_ = 10000;    
   nn_para->sample_size_ = nn_para->data_batch_num_ * nn_para->data_batch_size_;
   nn_para->channel_num_ = 3; 
-  nn_para->class_num_ = 10;
+  nn_para->class_num_ = 2;
 
   nn_para->learn_rate_ = 0.001;
   nn_para->mb_size_ = 50;
@@ -47,15 +47,16 @@ int main() {
   conv1->type_ = "conv";  
   conv1->input_im_size_ = nn_para->im_size_;
   conv1->input_size_ = (conv1->input_im_size_)*(conv1->input_im_size_);
+  conv1->input_num_ = 4;
   conv1->filter_size_ = 5;
-  conv1->filter_num_ = 10;    
+  conv1->filter_num_ = 20;    
 
   pool1->type_ = "pool";  
   pool1->pool_dim_ = 2;    
   
   conv2->type_ = "conv";  
   conv2->filter_size_ = 5;
-  conv2->filter_num_ = 10;    
+  conv2->filter_num_ = 20;    
   
   pool2->type_ = "pool";  
   pool2->pool_dim_ = 2;
@@ -72,26 +73,10 @@ int main() {
   NN* nn = new NN(nn_para);
   
   nn->Init();
-  nn->LoadData();
+  // nn->LoadData();
   nn->Train();
   
-  // ConvLayer* layer_ptr = dynamic_cast<ConvLayer*>(nn->layers_[0]);
-
-  // nn->RandGauss(layer_ptr->weight_,10);
-
-
-  // for (int i = 0; i < 10; ++i)
-  // {
-  //   std::cout << layer_ptr->weight_[i] << std::endl;
-  // }
-  
-  // }
-  
-  
-
   delete nn;
 
-
-
-	return 0;
+  return 0;
 }
